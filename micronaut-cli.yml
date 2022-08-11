@@ -1,0 +1,6 @@
+applicationType: default
+defaultPackage: com.dew
+testFramework: spock
+sourceLanguage: kotlin
+buildTool: gradle
+features: [annotation-api, app-name, config-consul, consul, discovery-consul, graalvm, gradle, http-client, jackson-databind, kafka, kotlin, kotlin-application, kotlin-build, logback, management, micronaut-build, mongo-reactive, netty-server, reactor, reactor-http-client, readme, security-annotations, security-jwt, shade, spock, test-resources, testcontainers, yaml]
