@@ -3,6 +3,7 @@ plugins {
     id("org.jetbrains.kotlin.kapt") version "1.6.21"
     id("org.jetbrains.kotlin.plugin.allopen") version "1.6.21"
     id("groovy")
+    id("jacoco")
     id("com.github.johnrengelman.shadow") version "7.1.2"
     id("io.micronaut.application") version "3.5.1"
     id("io.micronaut.test-resources") version "3.5.1"
@@ -65,6 +66,14 @@ application {
 java {
     sourceCompatibility = JavaVersion.toVersion("11")
 }
+jacocoTestReport {
+    reports {
+        xml.enabled true
+        html.enabled false
+    }
+}
+
+import org.gradle.api.tasks.testing.logging.TestLogEvent
 
 tasks {
     compileKotlin {
@@ -75,6 +84,26 @@ tasks {
     compileTestKotlin {
         kotlinOptions {
             jvmTarget = "11"
+        }
+    }
+    dockerBuild {
+        images = ["deworg/analytics:$project.version"]
+    }
+    dockerBuildNative {
+        images = ["deworg/analytics:$project.version"]
+    }
+    test {
+        testLogging {
+            events TestLogEvent.PASSED, TestLogEvent.SKIPPED, TestLogEvent.FAILED
+
+            afterSuite { desc, result ->
+                if (!desc.parent) { // will match the outermost suite
+                    def output = "Results: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} passed, ${result.failedTestCount} failed, ${result.skippedTestCount} skipped)"
+                    def startItem = '|  ', endItem = '  |'
+                    def repeatLength = startItem.length() + output.length() + endItem.length()
+                    println('\n' + ('-' * repeatLength) + '\n' + startItem + output + endItem + '\n' + ('-' * repeatLength))
+                }
+            }
         }
     }
 }
