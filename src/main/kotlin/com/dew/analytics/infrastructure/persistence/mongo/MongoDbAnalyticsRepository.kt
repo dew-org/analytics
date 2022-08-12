@@ -4,14 +4,14 @@ import com.dew.analytics.domain.Analytics
 import com.dew.analytics.domain.AnalyticsFrequency
 import com.dew.analytics.domain.AnalyticsRepository
 import com.dew.common.infrastructure.persistence.mongo.MongoDbConfiguration
-import com.mongodb.client.model.*
+import com.mongodb.client.model.Aggregates
+import com.mongodb.client.model.Field
+import com.mongodb.client.model.Filters
+import com.mongodb.client.model.Updates
 import com.mongodb.reactivestreams.client.MongoClient
 import com.mongodb.reactivestreams.client.MongoCollection
 import jakarta.inject.Singleton
-import org.bson.BsonDocument
-import org.bson.BsonInt32
 import org.bson.Document
-import org.bson.codecs.pojo.annotations.BsonId
 import org.bson.types.ObjectId
 import reactor.core.publisher.Mono
 import java.time.LocalDate
@@ -27,7 +27,7 @@ class MongoDbAnalyticsRepository(
         collection.insertOne(analytics)
     ).mapNotNull { success -> success.insertedId?.asObjectId()?.value }
 
-    override fun find(frequency: AnalyticsFrequency, date: LocalDate): Mono<Analytics> = Mono.from(
+    override fun find(frequency: AnalyticsFrequency, date: LocalDate, userId: String): Mono<Analytics> = Mono.from(
         collection.aggregate(
             listOf(
                 Aggregates.addFields(
@@ -37,6 +37,7 @@ class MongoDbAnalyticsRepository(
                 Aggregates.match(
                     Filters.and(
                         Filters.eq("frequency", frequency.name),
+                        Filters.eq("userId", userId),
                         when (frequency) {
                             AnalyticsFrequency.DAILY -> Filters.eq("date", date)
 

@@ -6,4 +6,5 @@ import com.dew.common.domain.bus.Request
 import reactor.core.publisher.Mono
 import java.time.LocalDate
 
-data class FindAnalyticsQuery(val date: LocalDate, val frequency: AnalyticsFrequency) : Request<Mono<AnalyticsResponse>>
+data class FindAnalyticsQuery(val date: LocalDate, val frequency: AnalyticsFrequency, val userId: String) :
+    Request<Mono<AnalyticsResponse>>

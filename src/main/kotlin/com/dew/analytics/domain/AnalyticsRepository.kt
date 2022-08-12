@@ -8,7 +8,7 @@ interface AnalyticsRepository {
 
     fun save(analytics: Analytics): Mono<ObjectId>
 
-    fun find(frequency: AnalyticsFrequency, date: LocalDate): Mono<Analytics>
+    fun find(frequency: AnalyticsFrequency, date: LocalDate, userId: String): Mono<Analytics>
 
     fun increaseInvoices(id: ObjectId): Mono<Boolean>
 
