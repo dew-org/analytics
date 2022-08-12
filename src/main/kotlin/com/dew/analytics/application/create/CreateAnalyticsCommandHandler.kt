@@ -28,7 +28,7 @@ class CreateAnalyticsCommandHandler(private val repository: AnalyticsRepository)
         now: LocalDate, frequency: AnalyticsFrequency, request: CreateAnalyticsCommand
     ): Mono<Boolean> {
 
-        return repository.find(frequency, now).switchIfEmpty(
+        return repository.find(frequency, now, request.userId).switchIfEmpty(
             Mono.just(Analytics(now, frequency, 1, request.total, 1, request.products, request.userId))
         ).flatMap { analytics ->
             if (analytics.id != null) {

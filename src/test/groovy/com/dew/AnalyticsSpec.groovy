@@ -28,7 +28,7 @@ class AnalyticsSpec extends Specification implements TestPropertyProvider {
         mediator.send(new CreateAnalyticsCommand(20, 200000, "users")).blockFirst()
 
         when:
-        var response = client.find()
+        var response = client.find("users")
 
         then:
         response.body.present
