@@ -5,6 +5,7 @@ import io.micronaut.configuration.kafka.annotation.KafkaListener
 import io.micronaut.configuration.kafka.annotation.Topic
 import io.micronaut.context.annotation.Requires
 import io.micronaut.context.env.Environment
+import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 
 @Requires(notEnv = [Environment.TEST])
@@ -12,6 +13,6 @@ import reactor.core.publisher.Mono
 class OnGenerateInvoice(private val mediator: Mediator) {
 
     @Topic("generate-invoice")
-    fun onGenerateInvoice(invoice: GeneratedInvoice): Mono<Boolean> =
+    fun onGenerateInvoice(invoice: GeneratedInvoice): Flux<Boolean> =
         mediator.send(CreateAnalyticsCommand(invoice.products, invoice.total, invoice.userId))
 }

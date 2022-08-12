@@ -4,11 +4,14 @@ import com.dew.analytics.domain.Analytics
 import com.dew.analytics.domain.AnalyticsFrequency
 import com.dew.analytics.domain.AnalyticsRepository
 import com.dew.common.infrastructure.persistence.mongo.MongoDbConfiguration
-import com.mongodb.client.model.Filters
-import com.mongodb.client.model.Updates
+import com.mongodb.client.model.*
 import com.mongodb.reactivestreams.client.MongoClient
 import com.mongodb.reactivestreams.client.MongoCollection
 import jakarta.inject.Singleton
+import org.bson.BsonDocument
+import org.bson.BsonInt32
+import org.bson.Document
+import org.bson.codecs.pojo.annotations.BsonId
 import org.bson.types.ObjectId
 import reactor.core.publisher.Mono
 import java.time.LocalDate
@@ -20,15 +23,32 @@ class MongoDbAnalyticsRepository(
 
 ) : AnalyticsRepository {
 
-    override fun save(analytics: Analytics): Mono<Boolean> = Mono.from(
+    override fun save(analytics: Analytics): Mono<ObjectId> = Mono.from(
         collection.insertOne(analytics)
-    ).map { true }.onErrorReturn(false)
+    ).mapNotNull { success -> success.insertedId?.asObjectId()?.value }
 
     override fun find(frequency: AnalyticsFrequency, date: LocalDate): Mono<Analytics> = Mono.from(
-        collection.find(
-            Filters.and(
-                Filters.eq("frequency", frequency.name),
-                Filters.eq("date", date)
+        collection.aggregate(
+            listOf(
+                Aggregates.addFields(
+                    Field("month", Document("\$month", "\$date")),
+                    Field("year", Document("\$year", "\$date"))
+                ),
+                Aggregates.match(
+                    Filters.and(
+                        Filters.eq("frequency", frequency.name),
+                        when (frequency) {
+                            AnalyticsFrequency.DAILY -> Filters.eq("date", date)
+
+                            AnalyticsFrequency.MONTHLY -> Filters.and(
+                                Filters.eq("month", date.monthValue), Filters.eq("year", date.year)
+                            )
+
+                            AnalyticsFrequency.YEARLY -> Filters.eq("year", date.year)
+                            else -> Filters.empty()
+                        }
+                    )
+                )
             )
         ).first()
     )

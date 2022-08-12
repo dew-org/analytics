@@ -3,6 +3,7 @@ package com.dew.analytics.application
 import com.dew.analytics.domain.AnalyticsFrequency
 import io.micronaut.core.annotation.Introspected
 import io.micronaut.core.annotation.ReflectiveAccess
+import org.bson.types.ObjectId
 import java.time.LocalDate
 
 @Introspected
@@ -14,6 +15,5 @@ data class AnalyticsResponse(
     val sales: Double,
     val customers: Int,
     val products: Int,
-    val userId: String,
-    val id: String
+    val userId: String
 )

@@ -6,7 +6,7 @@ import java.time.LocalDate
 
 interface AnalyticsRepository {
 
-    fun save(analytics: Analytics): Mono<Boolean>
+    fun save(analytics: Analytics): Mono<ObjectId>
 
     fun find(frequency: AnalyticsFrequency, date: LocalDate): Mono<Analytics>
 

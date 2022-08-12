@@ -16,6 +16,6 @@ class FindAnalyticsQueryHandler(
 
     override fun handle(request: FindAnalyticsQuery): Mono<AnalyticsResponse> {
         return analyticsRepository.find(request.frequency, request.date)
-            .mapNotNull { objectMapper.convertValue(it, AnalyticsResponse::class.java) }
+            .map { objectMapper.convertValue(it, AnalyticsResponse::class.java) }
     }
 }

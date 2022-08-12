@@ -10,41 +10,39 @@ import reactor.core.publisher.Mono
 import java.time.LocalDate
 
 @Singleton
-class CreateAnalyticsCommandHandler(private val analyticsRepository: AnalyticsRepository) :
-    RequestHandler<CreateAnalyticsCommand, Mono<Boolean>> {
+class CreateAnalyticsCommandHandler(private val repository: AnalyticsRepository) :
+    RequestHandler<CreateAnalyticsCommand, Flux<Boolean>> {
 
-    override fun handle(request: CreateAnalyticsCommand): Mono<Boolean> {
+    override fun handle(request: CreateAnalyticsCommand): Flux<Boolean> {
         val now = LocalDate.now()
 
-        val analytics = Flux.concat(
+        return Flux.just(
             createOrUpdateAnalytics(now, AnalyticsFrequency.DAILY, request),
             createOrUpdateAnalytics(now, AnalyticsFrequency.WEEKLY, request),
             createOrUpdateAnalytics(now, AnalyticsFrequency.MONTHLY, request),
             createOrUpdateAnalytics(now, AnalyticsFrequency.YEARLY, request)
-        )
-
-        return Mono.from(analytics).map { true }
+        ).flatMap { it.map { true } }
     }
 
     private fun createOrUpdateAnalytics(
-        now: LocalDate,
-        frequency: AnalyticsFrequency,
-        request: CreateAnalyticsCommand
+        now: LocalDate, frequency: AnalyticsFrequency, request: CreateAnalyticsCommand
     ): Mono<Boolean> {
-        val dailyAnalytics = analyticsRepository.find(frequency, now).map { analytics: Analytics? ->
-            if (analytics != null) {
-                return@map Flux.concat(
-                    analyticsRepository.increaseCustomers(analytics.id!!),
-                    analyticsRepository.increaseInvoices(analytics.id),
-                    analyticsRepository.increaseProducts(analytics.id, request.products),
-                    analyticsRepository.increaseSales(analytics.id, request.total)
+
+        return repository.find(frequency, now).switchIfEmpty(
+            Mono.just(Analytics(now, frequency, 1, request.total, 1, request.products, request.userId))
+        ).flatMap { analytics ->
+            if (analytics.id != null) {
+                return@flatMap Mono.from(
+                    Flux.just(
+                        repository.increaseCustomers(analytics.id),
+                        repository.increaseInvoices(analytics.id),
+                        repository.increaseProducts(analytics.id, request.products),
+                        repository.increaseSales(analytics.id, request.total)
+                    ).flatMap { it.map { true } }
                 )
-            } else {
-                val newAnalytics =
-                    Analytics(now, frequency, 1, request.total, 1, request.products, request.userId)
-                return@map Flux.from(analyticsRepository.save(newAnalytics))
             }
+
+            repository.save(analytics).map { true }
         }
-        return Mono.from(dailyAnalytics).map { true }
     }
 }
